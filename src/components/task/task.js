@@ -16,7 +16,8 @@ export default class Task extends Component {
   };
 
   render() {
-    const { time, meaning, onDeleted, done, onToggleDone, onEdit, edit, onKeyDown } = this.props;
+    const { time, meaning, onDeleted, done, onToggleDone, onEdit, edit, onKeyDown, timer, onPlay, onPause } =
+      this.props;
     const { label } = this.state;
 
     let classNames = 'active';
@@ -26,13 +27,23 @@ export default class Task extends Component {
     if (edit) {
       classNames = 'editing';
     }
+
+    const timerView = done
+      ? '00:00'
+      : `${String(Math.floor(timer / 60)).padStart(2, '0')}:${String(timer % 60).padStart(2, '0')}`;
+
     return (
-      <li className={classNames} onClick={onToggleDone}>
+      <li className={classNames}>
         <div className="view">
-          <input className="toggle" type="checkbox" />
+          <input className="toggle" type="checkbox" onClick={onToggleDone} />
           <label>
-            <span className="description">{meaning}</span>
-            <span className="created">
+            <span className="title">{meaning}</span>
+            <span className="description">
+              <button type="button" className="icon icon-play" aria-label="Play" onClick={onPlay} />
+              <button type="button" className="icon icon-pause" aria-label="Pause" onClick={onPause} />
+              {timerView}
+            </span>
+            <span className="description">
               created{' '}
               {formatDistanceToNow(time, {
                 includeSeconds: true,
@@ -65,4 +76,6 @@ Task.propTypes = {
   meaning: PropTypes.string.isRequired,
   done: PropTypes.bool,
   edit: PropTypes.bool,
+  onPause: PropTypes.func.isRequired,
+  onPlay: PropTypes.func.isRequired,
 };

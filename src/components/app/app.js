@@ -11,11 +11,53 @@ export default class App extends Component {
   state = {
     todoData: [],
     todoFilter: [
-      { id: 1, button: 'All' },
-      { id: 2, button: 'Active' },
-      { id: 3, button: 'Completed' },
+      { id: 1, button: 'All', selected: true },
+      { id: 2, button: 'Active', selected: false },
+      { id: 3, button: 'Completed', selected: false },
     ],
-    filterId: 1,
+    statusActive: 'All',
+  };
+
+  componentDidMount() {
+    setInterval(() => {
+      this.interval = this.setState(({ todoData }) => {
+        const newArr = todoData.map((el) => {
+          if (el.timer === 0) {
+            return el;
+          }
+          if (!el.pause) {
+            // eslint-disable-next-line no-param-reassign
+            el.timer -= 1;
+          }
+          return el;
+        });
+        return {
+          todoData: newArr,
+        };
+      });
+    }, 1000);
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.interval);
+  }
+
+  onPlay = (id) => {
+    this.setState(({ todoData }) => {
+      const newArr = todoData.map((el) => (el.id === id ? { ...el, pause: false } : { ...el }));
+      return {
+        todoData: newArr,
+      };
+    });
+  };
+
+  onPause = (id) => {
+    this.setState(({ todoData }) => {
+      const newArr = todoData.map((el) => (el.id === id ? { ...el, pause: true } : { ...el }));
+      return {
+        todoData: newArr,
+      };
+    });
   };
 
   deleteTask = (id) => {
@@ -27,8 +69,8 @@ export default class App extends Component {
     });
   };
 
-  addTask = (meaning) => {
-    const task = this.createTask(meaning);
+  addTask = (meaning, minute, seconds) => {
+    const task = this.createTask(meaning, minute, seconds);
     this.setState(({ todoData }) => ({
       todoData: [...todoData, task],
     }));
@@ -52,8 +94,18 @@ export default class App extends Component {
   };
 
   onClickFilter = (id) => {
-    this.setState({
-      filterId: id,
+    this.setState(({ todoFilter }) => {
+      const newArr = todoFilter.map((el) => (el.id === id ? { ...el, selected: true } : { ...el, selected: false }));
+      let status;
+      todoFilter.forEach((el) => {
+        if (el.id === id) {
+          status = el.button;
+        }
+      });
+      return {
+        todoFilter: newArr,
+        statusActive: status,
+      };
     });
   };
 
@@ -79,18 +131,20 @@ export default class App extends Component {
     }
   };
 
-  createTask(meaning) {
+  createTask(meaning, minute, seconds) {
     return {
       id: this.maxId++,
       time: new Date(),
       meaning,
+      timer: +minute * 60 + +seconds,
       done: false,
       edit: false,
+      pause: false,
     };
   }
 
   render() {
-    const { todoData, todoFilter, filterId } = this.state;
+    const { todoData, todoFilter, statusActive } = this.state;
     const doneCount = todoData.filter((el) => el.done).length;
     const todoCount = todoData.length - doneCount;
     return (
@@ -102,8 +156,10 @@ export default class App extends Component {
             onDeleted={this.deleteTask}
             onToggleDone={this.onToggleDone}
             onEdit={this.onToggleEdit}
-            filterId={filterId}
+            statusActive={statusActive}
             onKeyDown={this.onKeyDown}
+            onPlay={this.onPlay}
+            onPause={this.onPause}
           />
           <Footer todof={todoFilter} todoCount={todoCount} onClickFilter={this.onClickFilter} clear={this.clear} />
         </section>
