@@ -4,7 +4,8 @@ import PropTypes from 'prop-types';
 import './task.css';
 
 function Task(props) {
-  const { time, meaning, onDeleted, done, onToggleDone, onEdit, edit, onKeyDown, timer, onPlay, onPause } = props;
+  const { time, meaning, onDeleted, done, onToggleDone, onEdit, edit, onKeyDown, timer, onPlay, onPause, checked } =
+    props;
   const [label, setLabel] = useState(meaning);
 
   const classNames = require('classnames');
@@ -21,7 +22,7 @@ function Task(props) {
   return (
     <li className={classStatus}>
       <div className="view">
-        <input className="toggle" type="checkbox" onClick={onToggleDone} />
+        <input className="toggle" type="checkbox" onClick={onToggleDone} checked={checked} />
         <label>
           <span className="title">{meaning}</span>
           <span className="description">

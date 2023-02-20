@@ -66,6 +66,7 @@ function App() {
       done: false,
       edit: false,
       pause: false,
+      checked: false,
     };
   };
 
@@ -87,6 +88,10 @@ function App() {
 
   const onToggleDone = (id) => {
     onToggle(id, 'done');
+    setTodoData((data) => {
+      const newArr = data.map((todo) => (todo.id === id ? { ...todo, checked: !todo.checked } : { ...todo }));
+      return newArr;
+    });
   };
 
   const onClickFilter = (id) => {
