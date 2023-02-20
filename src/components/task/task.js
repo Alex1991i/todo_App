@@ -1,66 +1,59 @@
-import { Component } from 'react';
+import { useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import PropTypes from 'prop-types';
 import './task.css';
 
-export default class Task extends Component {
-  state = {
-    // eslint-disable-next-line react/destructuring-assignment
-    label: this.props.meaning,
-  };
+function Task(props) {
+  const { time, meaning, onDeleted, done, onToggleDone, onEdit, edit, onKeyDown, timer, onPlay, onPause } = props;
+  const [label, setLabel] = useState(meaning);
 
-  onLabelChange = (e) => {
-    this.setState({
-      label: e.target.value,
-    });
-  };
+  const classNames = require('classnames');
+  const classStatus = classNames({
+    active: !done && !edit,
+    completed: done,
+    editing: edit,
+  });
 
-  render() {
-    const { time, meaning, onDeleted, done, onToggleDone, onEdit, edit, onKeyDown, timer, onPlay, onPause } =
-      this.props;
-    const { label } = this.state;
+  const timerView = done
+    ? '00:00'
+    : `${String(Math.floor(timer / 60)).padStart(2, '0')}:${String(timer % 60).padStart(2, '0')}`;
 
-    let classNames = 'active';
-    if (done) {
-      classNames = 'completed';
-    }
-    if (edit) {
-      classNames = 'editing';
-    }
-
-    const timerView = done
-      ? '00:00'
-      : `${String(Math.floor(timer / 60)).padStart(2, '0')}:${String(timer % 60).padStart(2, '0')}`;
-
-    return (
-      <li className={classNames}>
-        <div className="view">
-          <input className="toggle" type="checkbox" onClick={onToggleDone} />
-          <label>
-            <span className="title">{meaning}</span>
-            <span className="description">
-              <button type="button" className="icon icon-play" aria-label="Play" onClick={onPlay} />
-              <button type="button" className="icon icon-pause" aria-label="Pause" onClick={onPause} />
-              {timerView}
-            </span>
-            <span className="description">
-              created{' '}
-              {formatDistanceToNow(time, {
-                includeSeconds: true,
-                addSuffix: true,
-              })}
-            </span>
-          </label>
-          <button type="button" className="icon icon-edit" onClick={onEdit} aria-label="Edit" />
-          <button type="button" className="icon icon-destroy" onClick={onDeleted} aria-label="Delete" />
-        </div>
-        {classNames === 'editing' && (
-          <input type="text" className="edit" onKeyDown={onKeyDown} onChange={this.onLabelChange} value={label} />
-        )}
-      </li>
-    );
-  }
+  return (
+    <li className={classStatus}>
+      <div className="view">
+        <input className="toggle" type="checkbox" onClick={onToggleDone} />
+        <label>
+          <span className="title">{meaning}</span>
+          <span className="description">
+            <button type="button" className="icon icon-play" aria-label="Play" onClick={onPlay} />
+            <button type="button" className="icon icon-pause" aria-label="Pause" onClick={onPause} />
+            {timerView}
+          </span>
+          <span className="description">
+            created{' '}
+            {formatDistanceToNow(time, {
+              includeSeconds: true,
+              addSuffix: true,
+            })}
+          </span>
+        </label>
+        <button type="button" className="icon icon-edit" onClick={onEdit} aria-label="Edit" />
+        <button type="button" className="icon icon-destroy" onClick={onDeleted} aria-label="Delete" />
+      </div>
+      {classStatus === 'editing' && (
+        <input
+          type="text"
+          className="edit"
+          onKeyDown={onKeyDown}
+          onChange={(e) => setLabel(e.target.value)}
+          value={label}
+        />
+      )}
+    </li>
+  );
 }
+
+export default Task;
 
 Task.defaultProps = {
   done: false,

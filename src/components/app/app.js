@@ -1,27 +1,25 @@
-import { Component } from 'react';
+import { useEffect, useState } from 'react';
 
 import NewTaskForm from '../newTaskForm/newTaskForm';
 import TaskList from '../taskList/taskList';
 import Footer from '../footer/footer';
 import './app.css';
 
-export default class App extends Component {
-  maxId = 1;
+function App() {
+  const [maxId, setMaxId] = useState(0);
+  const [todoData, setTodoData] = useState([]);
+  const [todoFilter, setTodoFilter] = useState([
+    { id: 1, button: 'All', selected: true },
+    { id: 2, button: 'Active', selected: false },
+    { id: 3, button: 'Completed', selected: false },
+  ]);
+  const [statusActive, setStatusActive] = useState('All');
 
-  state = {
-    todoData: [],
-    todoFilter: [
-      { id: 1, button: 'All', selected: true },
-      { id: 2, button: 'Active', selected: false },
-      { id: 3, button: 'Completed', selected: false },
-    ],
-    statusActive: 'All',
-  };
-
-  componentDidMount() {
+  useEffect(() => {
+    let interval;
     setInterval(() => {
-      this.interval = this.setState(({ todoData }) => {
-        const newArr = todoData.map((el) => {
+      interval = setTodoData((data) => {
+        const newArr = data.map((el) => {
           if (el.timer === 0) {
             return el;
           }
@@ -31,109 +29,37 @@ export default class App extends Component {
           }
           return el;
         });
-        return {
-          todoData: newArr,
-        };
+        return newArr;
       });
     }, 1000);
-  }
+    return clearInterval(interval);
+  }, [todoData.timer]);
 
-  componentWillUnmount() {
-    clearInterval(this.interval);
-  }
-
-  onPlay = (id) => {
-    this.setState(({ todoData }) => {
-      const newArr = todoData.map((el) => (el.id === id ? { ...el, pause: false } : { ...el }));
-      return {
-        todoData: newArr,
-      };
+  const onPlay = (id) => {
+    setTodoData((data) => {
+      const newArr = data.map((el) => (el.id === id ? { ...el, pause: false } : { ...el }));
+      return newArr;
     });
   };
 
-  onPause = (id) => {
-    this.setState(({ todoData }) => {
-      const newArr = todoData.map((el) => (el.id === id ? { ...el, pause: true } : { ...el }));
-      return {
-        todoData: newArr,
-      };
+  const onPause = (id) => {
+    setTodoData((data) => {
+      const newArr = data.map((el) => (el.id === id ? { ...el, pause: true } : { ...el }));
+      return newArr;
     });
   };
 
-  deleteTask = (id) => {
-    this.setState(({ todoData }) => {
-      const idx = todoData.findIndex((el) => el.id === id);
-      return {
-        todoData: [...todoData.slice(0, idx), ...todoData.slice(idx + 1)],
-      };
+  const deleteTask = (id) => {
+    setTodoData((data) => {
+      const idx = data.findIndex((el) => el.id === id);
+      return [...todoData.slice(0, idx), ...todoData.slice(idx + 1)];
     });
   };
 
-  addTask = (meaning, minute, seconds) => {
-    const task = this.createTask(meaning, minute, seconds);
-    this.setState(({ todoData }) => ({
-      todoData: [...todoData, task],
-    }));
-  };
-
-  onToggle = (id, name) => {
-    this.setState(({ todoData }) => {
-      const newArr = todoData.map((todo) => (todo.id === id ? { ...todo, [name]: !todo[name] } : { ...todo }));
-      return {
-        todoData: newArr,
-      };
-    });
-  };
-
-  onToggleEdit = (id) => {
-    this.onToggle(id, 'edit');
-  };
-
-  onToggleDone = (id) => {
-    this.onToggle(id, 'done');
-  };
-
-  onClickFilter = (id) => {
-    this.setState(({ todoFilter }) => {
-      const newArr = todoFilter.map((el) => (el.id === id ? { ...el, selected: true } : { ...el, selected: false }));
-      let status;
-      todoFilter.forEach((el) => {
-        if (el.id === id) {
-          status = el.button;
-        }
-      });
-      return {
-        todoFilter: newArr,
-        statusActive: status,
-      };
-    });
-  };
-
-  clear = () => {
-    this.setState(({ todoData }) => {
-      const newArr = todoData.filter((todo) => !todo.done);
-      return {
-        todoData: newArr,
-      };
-    });
-  };
-
-  onKeyDown = (id, e) => {
-    if (e.keyCode === 13) {
-      this.setState(({ todoData }) => {
-        const newArr = todoData.map((todo) =>
-          todo.id === id ? { ...todo, edit: false, meaning: e.target.value } : { ...todo }
-        );
-        return {
-          todoData: newArr,
-        };
-      });
-    }
-  };
-
-  createTask(meaning, minute, seconds) {
+  const createTask = (meaning, minute, seconds) => {
+    setMaxId((id) => id + 1);
     return {
-      id: this.maxId++,
+      id: maxId,
       time: new Date(),
       meaning,
       timer: +minute * 60 + +seconds,
@@ -141,29 +67,78 @@ export default class App extends Component {
       edit: false,
       pause: false,
     };
-  }
+  };
 
-  render() {
-    const { todoData, todoFilter, statusActive } = this.state;
-    const doneCount = todoData.filter((el) => el.done).length;
-    const todoCount = todoData.length - doneCount;
-    return (
-      <section className="todoapp">
-        <NewTaskForm onAdd={this.addTask} />
-        <section className="main">
-          <TaskList
-            todos={todoData}
-            onDeleted={this.deleteTask}
-            onToggleDone={this.onToggleDone}
-            onEdit={this.onToggleEdit}
-            statusActive={statusActive}
-            onKeyDown={this.onKeyDown}
-            onPlay={this.onPlay}
-            onPause={this.onPause}
-          />
-          <Footer todof={todoFilter} todoCount={todoCount} onClickFilter={this.onClickFilter} clear={this.clear} />
-        </section>
+  const addTask = (meaning, minute, seconds) => {
+    const task = createTask(meaning, minute, seconds);
+    setTodoData((data) => [...data, task]);
+  };
+
+  const onToggle = (id, name) => {
+    setTodoData((data) => {
+      const newArr = data.map((todo) => (todo.id === id ? { ...todo, [name]: !todo[name] } : { ...todo }));
+      return newArr;
+    });
+  };
+
+  const onToggleEdit = (id) => {
+    onToggle(id, 'edit');
+  };
+
+  const onToggleDone = (id) => {
+    onToggle(id, 'done');
+  };
+
+  const onClickFilter = (id) => {
+    setTodoFilter((filter) => {
+      const newArr = filter.map((el) => (el.id === id ? { ...el, selected: true } : { ...el, selected: false }));
+      return newArr;
+    });
+    todoFilter.forEach((el) => {
+      if (el.id === id) {
+        setStatusActive(el.button);
+      }
+    });
+  };
+
+  const clear = () => {
+    setTodoData((data) => {
+      const newArr = data.filter((todo) => !todo.done);
+      return newArr;
+    });
+  };
+
+  const onKeyDown = (id, e) => {
+    if (e.keyCode === 13) {
+      setTodoData((data) => {
+        const newArr = data.map((todo) =>
+          todo.id === id ? { ...todo, edit: false, meaning: e.target.value } : { ...todo }
+        );
+        return newArr;
+      });
+    }
+  };
+
+  const doneCount = todoData.filter((el) => el.done).length;
+  const todoCount = todoData.length - doneCount;
+  return (
+    <section className="todoapp">
+      <NewTaskForm onAdd={addTask} />
+      <section className="main">
+        <TaskList
+          todos={todoData}
+          onDeleted={deleteTask}
+          onToggleDone={onToggleDone}
+          onEdit={onToggleEdit}
+          statusActive={statusActive}
+          onKeyDown={onKeyDown}
+          onPlay={onPlay}
+          onPause={onPause}
+        />
+        <Footer todof={todoFilter} todoCount={todoCount} onClickFilter={onClickFilter} clear={clear} />
       </section>
-    );
-  }
+    </section>
+  );
 }
+
+export default App;
